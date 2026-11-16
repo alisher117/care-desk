@@ -15,8 +15,8 @@ npm run migrate                 # creates the schema, no data
 npm run dev
 ```
 
-- `http://localhost:3000/en` is a placeholder host page with the widget.
-- `http://localhost:3000/en/desk` is the operator dashboard.
+- `http://localhost:3000/en/desk` is the operator dashboard (`/` and `/en` redirect there).
+- The requester widget is not mounted on any page; see [Mounting the widget](#mounting-the-widget-in-another-app).
 
 | Command | What it does |
 | --- | --- |
@@ -38,7 +38,6 @@ src/
     web/       widget, dashboard, API client (React, no host knowledge)
     host/      everything specific to the app the desk is mounted in
   app/
-    [locale]/page.tsx                 placeholder page that mounts the widget
     [locale]/desk/[[...slug]]/        dashboard page
     api/care-desk/                    route handlers
 scripts/
