@@ -1,23 +1,42 @@
-import { signup } from "../actions/auth";
+'use client'
 
-export function SignupForm() {
+import { signup } from "../actions/auth"
+import { useActionState } from "react"
+
+export default function SignupForm(){
+    const [state, action, pending] = useActionState(signup, undefined)
     return (
-        <form action={signup}>
+        <form action={action}>
             <div>
                 <label htmlFor="name">Name</label>
-                <input name="name" id="name" placeholder="Name" />
+                <input id="name" placeholder="Name" name="name" />
             </div>
+            {state?.errors?.name && <p>{state.errors.name}</p>}
 
             <div>
                 <label htmlFor="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="Email" />
+                <input type="email" name="email" id="email" placeholder="Email" />
             </div>
+            {state?.errors?.email && <p>{state.errors.email}</p>}
 
             <div>
                 <label htmlFor="password">Password</label>
-                <input type="password" id="password" name="password" />
+                <input id="password" type="password" name="password" placeholder="Password" />
             </div>
-            <button type="submit">Sign up</button>
+            {state?.errors?.password && (
+                <div>
+                    <p>Password must:</p>
+                    <ul>
+                        {state.errors.password.map((error) => (
+                            <li key={error}>- {error}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            <button disabled={pending} type="submit">
+                Sign up
+            </button>
         </form>
     )
 }
