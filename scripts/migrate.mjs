@@ -8,7 +8,6 @@ import pg from "pg";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dir = path.join(root, "src", "care-desk", "core", "db", "migrations");
-
 // Next.js loads .env files for the app; this script runs on its own.
 for (const name of [".env.local", ".env"]) {
   const file = path.join(root, name);
