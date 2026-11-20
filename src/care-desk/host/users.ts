@@ -29,3 +29,24 @@ export async function createFirstAccount(input: {
   );
   return rows[0] ?? null;
 }
+
+export async function findUserForLogin(
+  email: string,
+): Promise<(User & { passwordHash: string }) | null> {
+  const { rows } = await getPool().query<User & { password_hash: string }>(
+    `select id, name, email, role, password_hash from users where lower(email) = lower($1)`,
+    [email],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  const { password_hash, ...user } = row;
+  return { ...user, passwordHash: password_hash };
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  const { rows } = await getPool().query<User>(
+    `select id, name, email, role from users where id = $1`,
+    [id],
+  );
+  return rows[0] ?? null;
+}
