@@ -3,10 +3,10 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import * as z from "zod";
-import { SetupFormSchema, type FormState } from "@/app/lib/definitions";
+import { LoginFormSchema, SetupFormSchema, type FormState } from "@/app/lib/definitions";
 import { careDeskConfig } from "@/care-desk/config/config";
-import { createSession } from "../lib/session";
-import { createFirstAccount } from "@/care-desk/host/users";
+import { createSession, deleteSession } from "../lib/session";
+import { createFirstAccount, findUserForLogin } from "@/care-desk/host/users";
 import { DASHBOARD_PATH } from "@/care-desk/web/routes";
 
 export async function setup(
