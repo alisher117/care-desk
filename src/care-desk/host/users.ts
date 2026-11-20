@@ -50,3 +50,10 @@ export async function getUserById(id: string): Promise<User | null> {
   );
   return rows[0] ?? null;
 }
+
+export async function listUsers(): Promise<User[]> {
+  const { rows } = await getPool().query<User>(
+    `select id, name, email, role from users order by name`,
+  );
+  return rows;
+}
