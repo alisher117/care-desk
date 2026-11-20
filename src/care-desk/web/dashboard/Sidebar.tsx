@@ -163,7 +163,7 @@ export default function Sidebar({
                 {onSignOut && (
                   <button
                     type='button'
-                    onClick={onSignOut}
+                    onClick={() => onSignOut()}
                     className='w-full cursor-pointer p-2 rounded-lg text-left text-[14px] transition-colors duration-200 hover:bg-gray-100'
                   >
                     <span className='flex flex-row gap-2 text-[#e92c2c]'><LogOut size={16} /> {labels.navSignOut}</span>

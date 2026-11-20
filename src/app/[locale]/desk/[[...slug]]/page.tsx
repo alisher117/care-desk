@@ -2,6 +2,7 @@ import { devOperator } from "@/care-desk/host/identity-adapter";
 import { getDashboardLabels } from "@/care-desk/host/labels";
 import CareDeskDashboard from "@/care-desk/web/dashboard/CareDeskDashboard";
 import type { View } from "@/care-desk/web/types";
+import { logout } from "@/app/actions/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function CareDeskPage({
       initialTicketId={tab ? undefined : first}
       labels={labels}
       locale={locale}
+      onSignOut={logout.bind(null, locale)}
     />
   );
 }
