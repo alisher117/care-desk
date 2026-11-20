@@ -40,7 +40,7 @@ export default function SetupForm({ locale }: { locale: string }) {
           id="email"
           name="email"
           autoComplete="email"
-          defaultValue={state?.values?.name}
+          defaultValue={state?.values?.email}
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand"
         />
         {state?.errors?.email && (
