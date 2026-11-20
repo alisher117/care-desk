@@ -1,9 +1,8 @@
 import type { Operator } from "../core";
 import { operatorService } from "../core";
-import { DEV_OPERATOR_ID, devOperator } from "./identity-adapter";
+import { listUsers } from "./users";
 
 export interface OperatorWithAccess extends Operator {
-  /** False once the person behind the operator row has lost access in the host. */
   active: boolean;
 }
 
@@ -13,24 +12,20 @@ export interface OperatorContact {
   locale: string | null;
 }
 
-/**
- * Operators the dashboard can assign tickets to. Without authentication every
- * known operator row counts as active; with real users, cross-check each
- * `hostUserId` against your user store here.
- */
 export async function listOperatorsWithAccess(): Promise<OperatorWithAccess[]> {
-  const operators = await operatorService.listOperators();
+  const [operators, users] = await Promise.all([
+    operatorService.listOperators(),
+    listUsers(),
+  ]);
+  const userIds = new Set(users.map((u) => u.id));
   return operators
-    .map((o) => ({ ...o, active: true }))
+    .map((o) => ({ ...o, active: userIds.has(o.hostUserId) }))
     .sort((a, b) => (a.displayName ?? "").localeCompare(b.displayName ?? ""));
 }
 
-/**
- * Where to reach an operator (assignment emails). Care Desk stores only the
- * host user id, so the host looks the contact up in its own user store.
- */
-export async function getOperatorContact(hostUserId: string): Promise<OperatorContact | null> {
-  if (hostUserId !== DEV_OPERATOR_ID) return null;
-  const operator = devOperator();
-  return { email: operator.email ?? null, name: operator.displayName, locale: null };
+export async function getOperatorContact(
+  hostUserId: string,
+): Promise<OperatorContact | null> {
+  const user = (await listUsers()).find((u) => u.id === hostUserId);
+  return user ? { email: user.email, name: user.name, locale: null } : null;
 }
