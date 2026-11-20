@@ -57,3 +57,9 @@ describe("operatorDenied", () => {
     expect(await res.json()).toEqual({ error: "forbidden" });
   });
 });
+
+  test("401 with a reason the dashboard redirects on", async () => {
+    const res = await operatorDenied();
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized", reason: "session_ended" });
+  });

@@ -13,14 +13,6 @@ if (url) {
   );
 }
 
-if (!flags.__careDeskWarned) {
-  flags.__careDeskWarned = true;
-  console.warn(
-    "[care-desk] Running WITHOUT authentication: every visitor is an operator with admin rights. " +
-      "Replace host/identity-adapter.ts before exposing this app.",
-  );
-}
-
 setNotifier(careDeskNotifier);
 
 export const CARE_DESK_DB_URL = url ?? "";
