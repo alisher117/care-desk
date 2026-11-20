@@ -1,5 +1,15 @@
 import * as z from "zod";
 
+
+export const LoginFormSchema = z.object({
+  email: z
+  .string()
+  .trim()
+  .lowercase()
+  .pipe(z.email ({ error: 'Please enter valid email' })),
+  password: z.string().min(1, { error: 'Enter your password'})
+});
+
 export const SetupFormSchema = z.object({
   name: z
     .string()
