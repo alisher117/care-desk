@@ -8,6 +8,10 @@ import { careDeskConfig } from "@/care-desk/config/config";
 import { createSession, deleteSession } from "../lib/session";
 import { createFirstAccount, findUserForLogin } from "@/care-desk/host/users";
 import { DASHBOARD_PATH } from "@/care-desk/web/routes";
+import { cache } from "react"
+import { getUserById, type User } from "@/care-desk/host/users";
+import { getSession } from "../lib/session";
+
 
 export async function setup(
   state: FormState,
@@ -77,3 +81,8 @@ export async function logout(locale: string): Promise<void> {
   await deleteSession();
   redirect(`/${safeLocale(locale)}/login`);
 }
+
+export const getCurrentUser = cache( async(): Promise<User | null> => {
+  const session = await getSession();
+  return session ? getUserById(session.userId) : null;
+});
