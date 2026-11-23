@@ -1,16 +1,14 @@
 "use server";
 
-import bcrypt from "bcryptjs";
-import { redirect } from "next/navigation";
-import * as z from "zod";
 import { LoginFormSchema, SetupFormSchema, type FormState } from "@/app/lib/definitions";
 import { careDeskConfig } from "@/care-desk/config/config";
-import { createSession, deleteSession } from "../lib/session";
-import { createFirstAccount, findUserForLogin } from "@/care-desk/host/users";
+import { createFirstAccount, findUserForLogin, getUserById, type User } from "@/care-desk/host/users";
 import { DASHBOARD_PATH } from "@/care-desk/web/routes";
-import { cache } from "react"
-import { getUserById, type User } from "@/care-desk/host/users";
-import { getSession } from "../lib/session";
+import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import * as z from "zod";
+import { createSession, deleteSession, getSession } from "../lib/session";
 
 
 export async function setup(
@@ -57,10 +55,10 @@ function safeLocale(value: unknown): string {
   return careDeskConfig.locales.includes(locale) ? locale : careDeskConfig.defaultLocale;
 }
 
-export async function login( state: FormState, formData: FormData ): Promise<FormState> {
+export async function login(state: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get('email') ?? '');
   const values = { email };
-  
+
   const parsed = LoginFormSchema.safeParse({ email, password: String(formData.get('password') ?? '') });
   if (!parsed.success) {
     return { errors: z.flattenError(parsed.error).fieldErrors, values };
@@ -70,7 +68,7 @@ export async function login( state: FormState, formData: FormData ): Promise<For
   const password_confirm = await bcrypt.compare(parsed.data.password, user?.passwordHash ?? DUMMY_HASH);
 
   if (!user || !password_confirm) {
-    return { message: 'invalid email or password', values};
+    return { message: 'invalid email or password', values };
   }
 
   await createSession(user.id)
@@ -82,7 +80,7 @@ export async function logout(locale: string): Promise<void> {
   redirect(`/${safeLocale(locale)}/login`);
 }
 
-export const getCurrentUser = cache( async(): Promise<User | null> => {
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const session = await getSession();
   return session ? getUserById(session.userId) : null;
 });
