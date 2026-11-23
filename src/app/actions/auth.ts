@@ -1,7 +1,8 @@
 "use server";
 
-import { LoginFormSchema, SetupFormSchema, type FormState } from "@/app/lib/definitions";
+import { InvitedSignupSchema, LoginFormSchema, SetupFormSchema, type FormState } from "@/app/lib/definitions";
 import { careDeskConfig } from "@/care-desk/config/config";
+import { acceptInvite } from "@/care-desk/host/invites";
 import { createFirstAccount, findUserForLogin, getUserById, type User } from "@/care-desk/host/users";
 import { DASHBOARD_PATH } from "@/care-desk/web/routes";
 import bcrypt from "bcryptjs";
@@ -73,6 +74,30 @@ export async function login(state: FormState, formData: FormData): Promise<FormS
 
   await createSession(user.id)
   redirect(`/${safeLocale(formData.get("locale"))}${DASHBOARD_PATH}`);
+}
+
+export async function signupWithInvite(
+  token: string,
+  locale: string,
+  state: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const name = String(formData.get("name") ?? "");
+  const values = { name };
+
+  const parsed = InvitedSignupSchema.safeParse({ name, password: formData.get('password') });
+  if (!parsed.success) {
+    return { errors: z.flattenError(parsed.error).fieldErrors, values };
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+  const user = await acceptInvite(token, { name: parsed.data.name, passwordHash });
+  if (!user) {
+    return { message: 'This invite is no longer valid', values }
+  }
+
+  await createSession(user.id);
+  redirect(`/${safeLocale(locale)}${DASHBOARD_PATH}`);
 }
 
 export async function logout(locale: string): Promise<void> {
