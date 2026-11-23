@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { logout } from "@/app/actions/auth";
-import { getCurrentUser } from "@/app/actions/auth";
+import { getCurrentUser, logout } from "@/app/actions/auth";
+import TeamCard from "@/app/ui/team-card";
 import { getDashboardLabels } from "@/care-desk/host/labels";
 import CareDeskDashboard from "@/care-desk/web/dashboard/CareDeskDashboard";
 import type { View } from "@/care-desk/web/types";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +32,7 @@ export default async function CareDeskPage({
       labels={labels}
       locale={locale}
       onSignOut={logout.bind(null, locale)}
+      settingsExtra={user.role === "admin" ? <TeamCard locale={locale} /> : undefined}
     />
   );
 }

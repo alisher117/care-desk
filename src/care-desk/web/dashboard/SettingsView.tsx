@@ -23,7 +23,7 @@ function Section({
   )
 }
 
-export default function SettingsView({ canAdmin }: { canAdmin: boolean }) {
+export default function SettingsView({ canAdmin, extra, }: { canAdmin: boolean; extra?: React.ReactNode }) {
   const { labels } = useLabels();
   return (
     <div className="w-full">
@@ -72,6 +72,7 @@ export default function SettingsView({ canAdmin }: { canAdmin: boolean }) {
           </div>
         </Section>
       </div>
+      {extra}
     </div>
   )
 }

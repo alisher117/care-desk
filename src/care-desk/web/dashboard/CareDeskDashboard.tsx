@@ -78,7 +78,7 @@ export default function CareDeskDashboard({
     } else if (view === 'overview') {
       return <OverviewView />
     } else if (view === 'settings') {
-      return <SettingsView canAdmin={canAdmin} />
+      return <SettingsView canAdmin={canAdmin} extra={settingsExtra} />
     } else if (view === 'account') {
       return <AccountView onOpen={openTicket} />
     } else {
