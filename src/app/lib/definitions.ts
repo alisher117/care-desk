@@ -3,11 +3,11 @@ import * as z from "zod";
 
 export const LoginFormSchema = z.object({
   email: z
-  .string()
-  .trim()
-  .lowercase()
-  .pipe(z.email ({ error: 'Please enter valid email' })),
-  password: z.string().min(1, { error: 'Enter your password'})
+    .string()
+    .trim()
+    .lowercase()
+    .pipe(z.email({ error: 'Please enter valid email' })),
+  password: z.string().min(1, { error: 'Enter your password' })
 });
 
 export const SetupFormSchema = z.object({
@@ -30,14 +30,29 @@ export const SetupFormSchema = z.object({
     }),
 });
 
+export const InvitedSignupSchema = SetupFormSchema.pick({ name: true, password: true })
+
+export const InvitedFormSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: 'Please enter valid email' })),
+  role: z.enum(['operator', 'admin']),
+})
+
+export type InviteState =
+  | { error?: string; link?: string; email?: string }
+  | undefined;
+
 export type FormState =
   | {
-      errors?: {
-        name?: string[];
-        email?: string[];
-        password?: string[];
-      };
-      message?: string;
-      values?: { name?: string; email?: string };
-    }
+    errors?: {
+      name?: string[];
+      email?: string[];
+      password?: string[];
+    };
+    message?: string;
+    values?: { name?: string; email?: string };
+  }
   | undefined;
