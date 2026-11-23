@@ -21,6 +21,7 @@ export default function CareDeskDashboard({
   labels = defaultDashboardLabels,
   locale = "en",
   onSignOut,
+  settingsExtra,
 }: {
   operatorName: string;
   canAdmin: boolean;
@@ -29,6 +30,7 @@ export default function CareDeskDashboard({
   labels?: DashboardLabels;
   locale?: string;
   onSignOut?: () => void;
+  settingsExtra?: React.ReactNode;
 }) {
   const [openId, setOpenId] = useState<string | null>(initialTicketId ?? null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
