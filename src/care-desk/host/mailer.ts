@@ -17,6 +17,9 @@ const transporter = smtpHost
     })
   : null;
 
+
+  export const emailEnabled = transporter !== null;
+
 export async function sendRenderedEmail(to: string, mail: RenderedEmail): Promise<void> {
   if (!transporter) {
     console.info(`[care-desk] SMTP not configured, email skipped: "${mail.subject}" -> ${to}`);

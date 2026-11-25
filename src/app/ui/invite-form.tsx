@@ -46,6 +46,14 @@ export default function InviteForm({ locale }: { locale: string }) {
           <p className="text-[13px] font-medium text-gray-700">
             Invite link for {state.email}. Copy it now: it is shown only once.
           </p>
+                    {state.emailStatus === "sent" && (
+            <p className="mt-1 text-[13px] text-gray-600">We also emailed it to them.</p>
+          )}
+          {state.emailStatus === "failed" && (
+            <p className="mt-1 text-[13px] text-red-600">
+              The email could not be sent. Share the link yourself.
+            </p>
+          )}
           <div className="mt-2 flex items-center gap-2">
             <input readOnly value={state.link} aria-label="Invite link" className={`${FIELD} flex-1 font-mono text-xs`} />
             <button type="button" onClick={() => copy(state.link!)} className={`${PRIMARY_BUTTON} bg-brand`}>

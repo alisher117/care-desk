@@ -42,7 +42,12 @@ export const InvitedFormSchema = z.object({
 })
 
 export type InviteState =
-  | { error?: string; link?: string; email?: string }
+  | {
+      error?: string;
+      link?: string;
+      email?: string;
+      emailStatus?: "sent" | "skipped" | "failed";
+    }
   | undefined;
 
 export type FormState =
