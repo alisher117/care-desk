@@ -49,7 +49,10 @@ function loadLogoAttachment(logoUrl: string | undefined): Attachment[] {
     const content = fs.readFileSync(p);
     return [{ filename: path.basename(p), content, cid: LOGO_CID }];
   } catch (err) {
-    console.error("[care-desk] logo attachment unavailable, sending without it:", err);
+    console.error(
+      "[care-desk] logo attachment unavailable, sending without it:",
+      err,
+    );
     return [];
   }
 }
@@ -68,7 +71,15 @@ interface ShellInput extends EmailBase {
   text: string;
 }
 
-function renderShell({ brand, copy, theme, subject, heading, rows, text }: ShellInput): RenderedEmail {
+function renderShell({
+  brand,
+  copy,
+  theme,
+  subject,
+  heading,
+  rows,
+  text,
+}: ShellInput): RenderedEmail {
   const attachments = loadLogoAttachment(theme?.logoUrl);
   const header = attachments.length
     ? `<img src="cid:${LOGO_CID}" alt="${escapeHtml(brand)}" height="32" style="height: 32px;" />`
@@ -183,7 +194,12 @@ export function renderStatusEmail(input: StatusEmailInput): RenderedEmail {
   const rows =
     paragraphRow(fillHtml(copy.statusTicketLine, { number, subject })) +
     headlineRow(status) +
-    (trimmed ? panelRow(copy.commentLabel, escapeHtml(trimmed).replace(/\r?\n/g, "<br>")) : "");
+    (trimmed
+      ? panelRow(
+          copy.commentLabel,
+          escapeHtml(trimmed).replace(/\r?\n/g, "<br>"),
+        )
+      : "");
 
   return renderShell({
     ...input,
@@ -205,8 +221,21 @@ export interface TicketCreatedEmailInput extends EmailBase {
   url: string;
 }
 
-export function renderTicketCreatedEmail(input: TicketCreatedEmailInput): RenderedEmail {
-  const { brand, copy, number, subject, description, category, requesterName, requesterEmail, requesterPhone, url } = input;
+export function renderTicketCreatedEmail(
+  input: TicketCreatedEmailInput,
+): RenderedEmail {
+  const {
+    brand,
+    copy,
+    number,
+    subject,
+    description,
+    category,
+    requesterName,
+    requesterEmail,
+    requesterPhone,
+    url,
+  } = input;
   const body = description.trim();
   const openLabel = fill(copy.openInDesk, { brand });
   const replyNote = fill(copy.createdReplyNote, { brand });
@@ -233,16 +262,25 @@ export function renderTicketCreatedEmail(input: TicketCreatedEmailInput): Render
 
   const detailsHtml =
     `${escapeHtml(copy.requester)}: <strong>${escapeHtml(requesterName)}</strong>` +
-    (requesterEmail ? `<br>${escapeHtml(copy.email)}: ${escapeHtml(requesterEmail)}` : "") +
-    (requesterPhone ? `<br>${escapeHtml(copy.phone)}: ${escapeHtml(requesterPhone)}` : "") +
-    (category ? `<br>${escapeHtml(copy.category)}: ${escapeHtml(category)}` : "");
+    (requesterEmail
+      ? `<br>${escapeHtml(copy.email)}: ${escapeHtml(requesterEmail)}`
+      : "") +
+    (requesterPhone
+      ? `<br>${escapeHtml(copy.phone)}: ${escapeHtml(requesterPhone)}`
+      : "") +
+    (category
+      ? `<br>${escapeHtml(copy.category)}: ${escapeHtml(category)}`
+      : "");
 
   const rows =
     paragraphRow(fillHtml(copy.createdIntro, { brand })) +
     headlineRow(number) +
     paragraphRow(fillHtml(copy.quoted, { text: subject }), 24) +
     panelRow(copy.detailsLabel, detailsHtml) +
-    panelRow(copy.descriptionLabel, escapeHtml(body).replace(/\r?\n/g, "<br>")) +
+    panelRow(
+      copy.descriptionLabel,
+      escapeHtml(body).replace(/\r?\n/g, "<br>"),
+    ) +
     buttonRow(openLabel, url, input) +
     paragraphRow(escapeHtml(replyNote), 32);
 
@@ -266,12 +304,20 @@ export interface TicketAssignedEmailInput extends EmailBase {
   url: string;
 }
 
-export function renderTicketAssignedEmail(input: TicketAssignedEmailInput): RenderedEmail {
+export function renderTicketAssignedEmail(
+  input: TicketAssignedEmailInput,
+): RenderedEmail {
   const { brand, copy, number, subject, requesterName, url } = input;
-  const greeting = fill(copy.greeting, { name: input.operatorName || copy.colleague });
+  const greeting = fill(copy.greeting, {
+    name: input.operatorName || copy.colleague,
+  });
   const priority = copy.priority[input.priority];
   const dueDate = input.dueDate
-    ? input.dueDate.toLocaleDateString(copy.dateLocale, { day: "2-digit", month: "2-digit", year: "numeric" })
+    ? input.dueDate.toLocaleDateString(copy.dateLocale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
     : undefined;
 
   const details =
@@ -307,6 +353,46 @@ export function renderTicketAssignedEmail(input: TicketAssignedEmailInput): Rend
     ...input,
     subject: fill(copy.assignedSubject, { brand, number }),
     heading: copy.assignedHeading,
+    rows,
+    text,
+  });
+}
+
+export interface InviteEmailInput extends EmailBase {
+  inviterName: string;
+  role: "admin" | "operator";
+  url: string;
+  expiresAt: Date;
+}
+
+export function renderInviteEmail(input: InviteEmailInput): RenderedEmail {
+  const { brand, copy, inviterName, url } = input;
+  const role = copy.roles[input.role];
+  const date = input.expiresAt.toLocaleDateString(copy.dateLocale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  const intro = { inviter: inviterName, brand, role };
+
+  const text =
+    `${fill(copy.inviteIntro, intro)}\n` +
+    `\n` +
+    `${copy.inviteButton}: ${url}\n` +
+    `\n` +
+    `${fill(copy.inviteExpiry, { date })}\n` +
+    `\n` +
+    `${fill(copy.footer, { brand })}\n`;
+
+  const rows =
+    paragraphRow(fillHtml(copy.inviteIntro, intro), 24) +
+    buttonRow(copy.inviteButton, url, input) +
+    paragraphRow(fillHtml(copy.inviteExpiry, { date }), 32);
+
+  return renderShell({
+    ...input,
+    subject: fill(copy.inviteSubject, { brand }),
+    heading: fill(copy.inviteHeading, { brand }),
     rows,
     text,
   });

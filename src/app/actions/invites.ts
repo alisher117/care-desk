@@ -1,4 +1,4 @@
-'use client'
+'use server'
 
 import { careDeskConfig } from "@/care-desk/config/config";
 import { createInvite, revokeInvite } from "@/care-desk/host/invites";

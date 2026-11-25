@@ -1,6 +1,3 @@
-// Applies src/care-desk/core/db/migrations/*.sql in file-name order, once each.
-//   npm run migrate            apply what is pending
-//   npm run migrate -- status  list applied / pending, change nothing
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,7 +5,6 @@ import pg from "pg";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dir = path.join(root, "src", "care-desk", "core", "db", "migrations");
-// Next.js loads .env files for the app; this script runs on its own.
 for (const name of [".env.local", ".env"]) {
   const file = path.join(root, name);
   if (fs.existsSync(file)) process.loadEnvFile(file);
@@ -34,8 +30,7 @@ try {
   const { rows } = await client.query("select name from care_schema_migrations");
   const applied = new Set(rows.map((r) => r.name));
 
-  // A database that already has the tables but no bookkeeping (schema applied
-  // by hand with psql) must not be re-run from 0001.
+
   if (applied.size === 0) {
     const { rows: existing } = await client.query("select to_regclass('care_tickets') as t");
     if (existing[0].t) {

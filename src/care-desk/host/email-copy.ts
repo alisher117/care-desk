@@ -31,6 +31,13 @@ export interface EmailCopy {
   assignedText: string;
   openRequest: string;
 
+  roles: Record<"operator" | "admin", string>;
+  inviteSubject: string;
+  inviteHeading: string;
+  inviteIntro: string;
+  inviteButton: string;
+  inviteExpiry: string;
+
   detailsLabel: string;
   descriptionLabel: string;
   requester: string;
@@ -71,6 +78,13 @@ const en: EmailCopy = {
   assignedText: "You have been assigned request {number} “{subject}”.",
   openRequest: "Open request",
 
+  roles: { operator: "operator", admin: "admin" },
+  inviteSubject: "You're invited to {brand}",
+  inviteHeading: "You're invited to {brand}",
+  inviteIntro: "{inviter} invited you to join {brand} as {role}.",
+  inviteButton: "Accept invite",
+  inviteExpiry: "This link works once and expires on {date}.",
+
   detailsLabel: "Request details:",
   descriptionLabel: "Description:",
   requester: "Requester",
@@ -110,6 +124,13 @@ const ru: EmailCopy = {
   assignedIntro: "Вам назначено обращение",
   assignedText: "Вам назначено обращение {number} «{subject}».",
   openRequest: "Открыть обращение",
+
+    roles: { operator: "оператор", admin: "администратор" },
+  inviteSubject: "Приглашение в {brand}",
+  inviteHeading: "Вас пригласили в {brand}",
+  inviteIntro: "{inviter} приглашает вас в {brand}. Ваша роль: {role}.",
+  inviteButton: "Принять приглашение",
+  inviteExpiry: "Ссылка одноразовая и действует до {date}.",
 
   detailsLabel: "Детали обращения:",
   descriptionLabel: "Описание:",
