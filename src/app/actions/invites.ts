@@ -1,13 +1,13 @@
 "use server";
 
-import { careDeskConfig } from "@/care-desk/config/config";
-import { createInvite, revokeInvite } from "@/care-desk/host/invites";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import * as z from "zod";
-import { InvitedFormSchema, InviteState } from "../lib/definitions";
+import { InvitedFormSchema, type InviteState } from "@/app/lib/definitions";
+import { careDeskConfig } from "@/care-desk/config/config";
 import { getCurrentUser } from "./auth";
 import { sendInviteEmail } from "@/care-desk/host/invite-email";
+import { createInvite, revokeInvite } from "@/care-desk/host/invites";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -20,20 +20,16 @@ export async function createInviteAction(
   formData: FormData,
 ): Promise<InviteState> {
   const admin = await requireAdmin();
-  if (!admin) return { error: "Only admins can invite users" };
+  if (!admin) return { error: "Only admins can invite people." };
 
   const email = String(formData.get("email") ?? "");
-  const parsed = InvitedFormSchema.safeParse({
-    email,
-    role: formData.get("role"),
-  });
-  if (!parsed.success) return { error: "Enter a valid email address", email };
+  const parsed = InvitedFormSchema.safeParse({ email, role: formData.get("role") });
+  if (!parsed.success) return { error: "Enter a valid email address.", email };
 
   const result = await createInvite({ ...parsed.data, invitedBy: admin.id });
-  if ("error" in result)
-    return { error: "That email already has an account.", email };
+  if ("error" in result) return { error: "That email already has an account.", email };
 
-const safeLocale = careDeskConfig.locales.includes(locale) ? locale : careDeskConfig.defaultLocale;
+  const safeLocale = careDeskConfig.locales.includes(locale) ? locale : careDeskConfig.defaultLocale;
   const origin = (await headers()).get("origin") ?? process.env.APP_URL ?? "";
   const link = `${origin}/${safeLocale}/invite/${result.token}`;
 
@@ -48,4 +44,11 @@ const safeLocale = careDeskConfig.locales.includes(locale) ? locale : careDeskCo
 
   revalidatePath("/", "layout");
   return { link, email: parsed.data.email, emailStatus };
+}
+
+export async function revokeInviteAction(id: string): Promise<void> {
+  const admin = await requireAdmin();
+  if (!admin || !z.uuid().safeParse(id).success) return;
+  await revokeInvite(id);
+  revalidatePath("/", "layout");
 }

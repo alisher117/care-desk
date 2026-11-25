@@ -13,18 +13,18 @@ export interface Invite {
   expiresAt: Date;
 }
 
-export interface InviteRow {
+interface InviteRow {
   id: string;
   email: string;
   role: UserRole;
-  expiresAt: Date;
+  expires_at: Date;
 }
 
 const toInvite = (r: InviteRow): Invite => ({
   id: r.id,
   email: r.email,
   role: r.role,
-  expiresAt: r.expiresAt,
+  expiresAt: r.expires_at,
 });
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest('hex');
