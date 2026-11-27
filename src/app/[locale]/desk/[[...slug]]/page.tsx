@@ -32,7 +32,7 @@ export default async function CareDeskPage({
       labels={labels}
       locale={locale}
       onSignOut={logout.bind(null, locale)}
-      settingsExtra={user.role === "admin" ? <TeamCard locale={locale} /> : undefined}
+      settingsExtra={user.role === "admin" ? <TeamCard locale={locale} currentUserId={user.id} /> : undefined}
     />
   );
 }
