@@ -8,6 +8,7 @@ import { careDeskConfig } from "@/care-desk/config/config";
 import { getCurrentUser } from "./auth";
 import { sendInviteEmail } from "@/care-desk/host/invite-email";
 import { createInvite, revokeInvite } from "@/care-desk/host/invites";
+import { deleteUser } from "@/care-desk/host/users";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -51,4 +52,12 @@ export async function revokeInviteAction(id: string): Promise<void> {
   if (!admin || !z.uuid().safeParse(id).success) return;
   await revokeInvite(id);
   revalidatePath("/", "layout");
+}
+
+export async function removeUserAction(id: string): Promise<void> {
+  const admin = await requireAdmin();
+  if ( !admin || !z.uuid().safeParse(id).success) return;
+  if (id === admin.id) return;
+  await deleteUser(id);
+  revalidatePath('/', 'layout');
 }
