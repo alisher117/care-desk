@@ -27,6 +27,27 @@ export const ticketFormSchema = z.object({
 
 export type ticketFormValues = z.infer<typeof ticketFormSchema>;
 
+export const publicTicketFormSchema = ticketFormSchema.extend({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Please enter your name')
+    .max(60, 'Name is too long'),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(254, 'Email is too long')
+    .pipe(z.email('Please enter a valid email')),
+  phone: z
+    .string()
+    .trim()
+    .max(30, 'Phone number is too long')
+    .optional(),
+});
+
+export type publicTicketFormValues = z.infer<typeof publicTicketFormSchema>
+
 export function validateCategory(category: string | undefined, available: string[]): string | null {
   if (available.length === 0) return null;
   return category && available.includes(category) ? null : CATEGORY_REQUIRED_MESSAGE;
