@@ -57,3 +57,15 @@ export async function listUsers(): Promise<User[]> {
   );
   return rows;
 }
+
+export async function deleteUser(id: string): Promise<boolean> {
+  const { rows } = await getPool().query(
+     `with gone_invites as (
+       delete from invites where invited_by = $1
+     )
+     delete from users where id = $1
+     returning id`,
+    [id],
+  );
+  return rows.length > 0;
+} 
