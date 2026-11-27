@@ -75,7 +75,6 @@ export async function acceptInvite(
     );
     return rows[0] ?? null;
   } catch (err) {
-    // 23505 = unique violation: the email got an account some other way.
     if ((err as { code?: string }).code === "23505") return null;
     throw err;
   }
