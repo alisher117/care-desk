@@ -10,8 +10,19 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    async headers() {
+    const locales = careDeskConfig.locales.join("|");
+    const embedOrigins = process.env.CARE_DESK_EMBED_ORIGINS?.trim() || "*";
+    return [
+      { source: `/((?!(?:${locales})/embed$).*)`, headers: securityHeaders },
+      {
+        source: `/:locale(${locales})/embed`,
+        headers: [
+          ...securityHeaders.filter((h) => h.key !== "X-Frame-Options"),
+          { key: "Content-Security-Policy", value: `frame-ancestors ${embedOrigins}` },
+        ],
+      },
+    ];
   },
   async redirects() {
     return [
