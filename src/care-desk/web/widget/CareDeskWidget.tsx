@@ -107,7 +107,7 @@ export default function CareDeskWidget({
 
   useEffect(() => {
     if (phase === "open") {
-      closeButtonRef.current?.focus();
+      closeButtonRef.current?.focus({ preventScroll: true });
       return;
     }
     if (!restoreFocusRef.current) return;
