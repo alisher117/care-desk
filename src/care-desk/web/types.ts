@@ -49,6 +49,10 @@ export interface CategoryDto {
   createdAt: string;
 }
 
+export interface WidgetCategoryDto {
+  name: string;
+}
+
 export interface MetricsDto {
   opened: number;
   resolved: number;

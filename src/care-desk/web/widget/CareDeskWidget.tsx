@@ -1,23 +1,30 @@
 "use client";
 
-import { LifeBuoy, Loader2, LogIn, Send, X } from "lucide-react";
+import { LifeBuoy, Loader2, Send, X } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { careDeskConfig } from "../../config/config";
 import { defaultWidgetLabels, type WidgetLabels } from "../../config/labels";
 import { ApiError, widgetApi } from "../api";
-import type { CategoryDto } from "../types";
+import type { WidgetCategoryDto } from "../types";
 import {
   CATEGORY_REQUIRED_MESSAGE,
   CATEGORY_UNAVAILABLE_MESSAGE,
   TICKET_DESCRIPTION_MAX,
-  ticketFormSchema,
+  publicTicketFormSchema,
   validateCategory,
 } from "../validation";
 import { CARE_DESK_OPEN_EVENT } from "./open";
 
 type Phase = "closed" | "open" | "closing";
-type View = "form" | "success" | "login";
-type FieldErrors = { category?: string; subject?: string; description?: string };
+type View = "form" | "success";
+type FieldErrors = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  category?: string;
+  subject?: string;
+  description?: string;
+};
 type TextField = "subject" | "description";
 
 const CLOSE_MS = 200;
@@ -47,16 +54,35 @@ function sharedMessageLabel(labels: WidgetLabels, message: string | undefined): 
   return message;
 }
 
+const FIELD_BASE =
+  "w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-all duration-200 ease-out placeholder:text-gray-400 focus:ring-[3px]";
+const FIELD_OK = "border-gray-200 hover:border-gray-300 focus:border-(--brand) focus:ring-(--brand)/15";
+const FIELD_BAD = "border-red-300 focus:border-red-400 focus:ring-red-500/15";
+const fieldClass = (error: string | undefined) => `${FIELD_BASE} ${error ? FIELD_BAD : FIELD_OK}`;
+
 export default function CareDeskWidget({
   labels = defaultWidgetLabels,
+  embedded = false,
+  onOpenChange,
 }: {
   labels?: WidgetLabels;
+  /**
+   * The widget is alone inside an iframe: it fills the frame instead of
+   * floating in a corner, and the page that owns the frame positions it.
+   */
+  embedded?: boolean;
+  /** Called when the panel opens and when it has finished closing. */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [phase, setPhase] = useState<Phase>("closed");
   const [view, setView] = useState<View>("form");
   const [pulsed, setPulsed] = useState(false);
-  const [categories, setCategories] = useState<CategoryDto[] | null>(null);
+  const [categories, setCategories] = useState<WidgetCategoryDto[] | null>(null);
   const [categoriesStatus, setCategoriesStatus] = useState<"loading" | "ready" | "failed">("loading");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [trap, setTrap] = useState("");
   const [category, setCategory] = useState("");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -91,6 +117,17 @@ export default function CareDeskWidget({
     (target?.isConnected ? target : launcherRef.current)?.focus();
   }, [phase]);
 
+  // The frame around an embedded widget stays large until the closing
+  // animation is over, so "closing" still counts as open.
+  const isOpen = phase !== "closed";
+  const openChangeRef = useRef(onOpenChange);
+  useEffect(() => {
+    openChangeRef.current = onOpenChange;
+  });
+  useEffect(() => {
+    openChangeRef.current?.(isOpen);
+  }, [isOpen]);
+
   function refreshCategories() {
     const request = ++categoriesRequest.current;
     setCategoriesStatus("loading");
@@ -104,8 +141,8 @@ export default function CareDeskWidget({
       })
       .catch((err: unknown) => {
         if (request !== categoriesRequest.current) return;
-        if (err instanceof ApiError && err.status === 401) setView("login");
-        else setCategoriesStatus("failed");
+        console.error("[care-desk] categories failed to load", err);
+        setCategoriesStatus("failed");
       });
   }
 
@@ -162,6 +199,8 @@ export default function CareDeskWidget({
     return () => document.removeEventListener("keydown", onKeyDown);
   });
 
+  // After a successful submit the request fields are cleared, but name, email
+  // and phone stay, so a second request does not need them typed again.
   function reset() {
     setCategory("");
     setSubject("");
@@ -179,11 +218,21 @@ export default function CareDeskWidget({
     if (sending || categoriesStatus !== "ready") return;
     setFormError(null);
 
-    const parsed = ticketFormSchema.safeParse({ category: category || undefined, subject, description });
+    const parsed = publicTicketFormSchema.safeParse({
+      name,
+      email,
+      phone: phone || undefined,
+      category: category || undefined,
+      subject,
+      description,
+    });
     const fieldErrors: FieldErrors = {};
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
         const key = issue.path[0];
+        if (key === "name") fieldErrors.name = labels.widgetErrNameRequired;
+        if (key === "email") fieldErrors.email = labels.widgetErrEmailInvalid;
+        if (key === "phone") fieldErrors.phone = labels.widgetErrPhoneTooLong;
         if (key === "subject") fieldErrors.subject = issueLabel(labels, "subject", issue);
         if (key === "description") {
           fieldErrors.description = issueLabel(labels, "description", issue);
@@ -202,15 +251,18 @@ export default function CareDeskWidget({
 
     setSending(true);
     try {
-      const ticket = await widgetApi.submit(parsed.data);
+      const ticket = await widgetApi.submit({ ...parsed.data, contact_fax: trap });
       setTicketNumber(`#${String(ticket.number).padStart(3, "0")}`);
       reset();
       setView("success");
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setView("login");
+      if (err instanceof ApiError && err.status === 429) {
+        setFormError(labels.widgetErrRateLimited);
       } else if (err instanceof ApiError && err.status === 400 && err.issues) {
         setErrors({
+          name: err.issues.name ? labels.widgetErrNameRequired : undefined,
+          email: err.issues.email ? labels.widgetErrEmailInvalid : undefined,
+          phone: err.issues.phone ? labels.widgetErrPhoneTooLong : undefined,
           category: sharedMessageLabel(labels, err.issues.category?.[0]),
           subject: sharedMessageLabel(labels, err.issues.subject?.[0]),
           description: sharedMessageLabel(labels, err.issues.description?.[0]),
@@ -231,7 +283,6 @@ export default function CareDeskWidget({
   const headings: Record<View, { title: string; hint: string }> = {
     form: { title: labels.widgetFormTitle, hint: labels.widgetFormHint },
     success: { title: labels.widgetSuccessTitle, hint: labels.widgetSuccessHint },
-    login: { title: labels.widgetLoginTitle, hint: labels.widgetLoginHint },
   };
   const heading = headings[view];
   const showCategories = categories === null ? categoriesStatus === "loading" : categories.length > 0;
@@ -249,9 +300,13 @@ export default function CareDeskWidget({
           type="button"
           onClick={openPanel}
           aria-label={labels.widgetOpen}
-          className="group fixed bottom-5 right-5 z-50 flex h-16 items-center rounded-full bg-(--brand) px-4.5 text-white shadow-xl transition-all duration-300 ease-out animate-widget-pop hover:-translate-y-0.5 hover:shadow-2xl hover:brightness-110 active:translate-y-0 active:scale-95 sm:px-6"
+          className={
+            embedded
+              ? "group flex h-dvh w-full items-center justify-center rounded-full bg-(--brand) text-white transition-all duration-300 ease-out hover:brightness-110 active:scale-95"
+              : "group fixed bottom-5 right-5 z-50 flex h-16 items-center rounded-full bg-(--brand) px-4.5 text-white shadow-xl transition-all duration-300 ease-out animate-widget-pop hover:-translate-y-0.5 hover:shadow-2xl hover:brightness-110 active:translate-y-0 active:scale-95 sm:px-6"
+          }
         >
-          {!pulsed && (
+          {!pulsed && !embedded && (
             <span
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 rounded-full border-2 border-(--brand) opacity-0 animate-widget-ring"
@@ -261,9 +316,11 @@ export default function CareDeskWidget({
             size={28}
             className="shrink-0 transition-transform duration-500 ease-out group-hover:rotate-45"
           />
-          <span className="hidden whitespace-nowrap text-base font-semibold sm:ml-2.5 sm:inline">
-            {labels.widgetOpen}
-          </span>
+          {!embedded && (
+            <span className="hidden whitespace-nowrap text-base font-semibold sm:ml-2.5 sm:inline">
+              {labels.widgetOpen}
+            </span>
+          )}
         </button>
       )}
 
@@ -273,7 +330,11 @@ export default function CareDeskWidget({
           role="dialog"
           aria-label={careDeskConfig.name}
           tabIndex={-1}
-          className={`fixed bottom-5 right-5 z-50 flex max-h-[calc(100dvh-2.5rem)] w-105 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_24px_48px_-16px_rgba(0,0,0,0.28)] outline-none ${phase === "closing" ? "animate-widget-out" : "animate-widget-in"}`}
+          className={`${
+            embedded
+              ? "flex h-dvh w-full flex-col overflow-hidden bg-white outline-none"
+              : "fixed bottom-5 right-5 z-50 flex max-h-[calc(100dvh-2.5rem)] w-105 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_24px_48px_-16px_rgba(0,0,0,0.28)] outline-none"
+          } ${phase === "closing" ? "animate-widget-out" : "animate-widget-in"}`}
         >
           <div className="relative shrink-0 overflow-hidden bg-[linear-gradient(135deg,var(--brand),color-mix(in_srgb,var(--brand)_72%,#0a0a0a))] px-5 py-4 text-white shorter:py-3">
             <span
@@ -306,17 +367,8 @@ export default function CareDeskWidget({
           </div>
 
           <div
-            className={`min-h-0 overflow-y-auto overscroll-contain px-5 pt-5 shorter:px-4 shorter:pt-4 ${view === "form" ? "pb-4 shorter:pb-3" : "pb-5 shorter:pb-4"}`}
+            className={`min-h-0 overflow-y-auto overscroll-contain px-5 pt-5 shorter:px-4 shorter:pt-4 ${embedded ? "flex-1" : ""} ${view === "form" ? "pb-4 shorter:pb-3" : "pb-5 shorter:pb-4"}`}
           >
-            {view === "login" && (
-              <div className="flex flex-col items-center gap-3 py-2 text-center animate-widget-view">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-500 animate-widget-pop">
-                  <LogIn size={24} />
-                </span>
-                <p className="text-sm text-gray-700">{labels.widgetLoginBody}</p>
-              </div>
-            )}
-
             {view === "success" && (
               <div className="flex flex-col items-center gap-3 py-2 text-center animate-widget-view">
                 <span className="flex h-16 w-16 items-center justify-center rounded-full bg-(--brand)/10 text-(--brand) animate-widget-pop">
@@ -365,6 +417,73 @@ export default function CareDeskWidget({
 
             {view === "form" && (
               <div className="flex flex-col gap-4 animate-widget-view shorter:gap-3">
+                <div>
+                  <label htmlFor="care-desk-name" className="mb-1 block text-xs font-medium text-gray-500">
+                    {labels.widgetNameLabel}
+                  </label>
+                  <input
+                    id="care-desk-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoComplete="name"
+                    placeholder={labels.widgetNamePlaceholder}
+                    className={fieldClass(errors.name)}
+                  />
+                  {errors.name && (
+                    <p className="mt-1.5 text-xs font-medium text-red-600 animate-widget-view">{errors.name}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="care-desk-email" className="mb-1 block text-xs font-medium text-gray-500">
+                      {labels.widgetEmailLabel}
+                    </label>
+                    <input
+                      id="care-desk-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                      placeholder={labels.widgetEmailPlaceholder}
+                      className={fieldClass(errors.email)}
+                    />
+                    {errors.email && (
+                      <p className="mt-1.5 text-xs font-medium text-red-600 animate-widget-view">{errors.email}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="care-desk-phone" className="mb-1 block text-xs font-medium text-gray-500">
+                      {labels.widgetPhoneLabel}
+                    </label>
+                    <input
+                      id="care-desk-phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      autoComplete="tel"
+                      className={fieldClass(errors.phone)}
+                    />
+                    {errors.phone && (
+                      <p className="mt-1.5 text-xs font-medium text-red-600 animate-widget-view">{errors.phone}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Honeypot: off-screen and skipped by keyboard and screen readers.
+                    People never fill it in; bots that fill every field do. */}
+                <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+                  <label htmlFor="care-desk-contact-fax">Fax</label>
+                  <input
+                    id="care-desk-contact-fax"
+                    name="contact_fax"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={trap}
+                    onChange={(e) => setTrap(e.target.value)}
+                  />
+                </div>
+
                 {categoriesStatus === "failed" && (
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-red-50 px-3 py-2 animate-widget-view">
                     <p className="text-xs font-medium text-red-600">{labels.widgetErrCategoriesLoad}</p>
@@ -397,7 +516,7 @@ export default function CareDeskWidget({
                       <div className="flex flex-wrap gap-2">
                         {categories.map((c, i) => (
                           <button
-                            key={c.id}
+                            key={c.name}
                             type="button"
                             onClick={() => pick(c.name)}
                             aria-pressed={category === c.name}
@@ -435,7 +554,7 @@ export default function CareDeskWidget({
                       }
                     }}
                     placeholder={labels.widgetSubjectPlaceholder}
-                    className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-all duration-200 ease-out placeholder:text-gray-400 focus:ring-[3px] ${errors.subject ? "border-red-300 focus:border-red-400 focus:ring-red-500/15" : "border-gray-200 hover:border-gray-300 focus:border-(--brand) focus:ring-(--brand)/15"}`}
+                    className={fieldClass(errors.subject)}
                   />
                   {errors.subject && (
                     <p className="mt-1.5 text-xs font-medium text-red-600 animate-widget-view">
@@ -463,8 +582,8 @@ export default function CareDeskWidget({
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder={labels.widgetDescriptionPlaceholder}
-                    rows={5}
-                    className={`w-full resize-none shorter:h-21 rounded-xl border bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-all duration-200 ease-out placeholder:text-gray-400 focus:ring-[3px] ${errors.description ? "border-red-300 focus:border-red-400 focus:ring-red-500/15" : "border-gray-200 hover:border-gray-300 focus:border-(--brand) focus:ring-(--brand)/15"}`}
+                    rows={4}
+                    className={`resize-none shorter:h-21 ${fieldClass(errors.description)}`}
                   />
                   {errors.description && (
                     <p className="mt-1.5 text-xs font-medium text-red-600 animate-widget-view">

@@ -8,8 +8,9 @@ import type {
   TicketNoteDto,
   TicketPriority,
   TicketStatus,
+  WidgetCategoryDto,
 } from "./types";
-import type { ticketFormValues } from "./validation";
+import type { publicTicketFormValues } from "./validation";
 
 export class ApiError extends Error {
   constructor(
@@ -65,14 +66,15 @@ function dashboardJson<T>(res: Response): Promise<T> {
 const base = "/api/care-desk";
 
 export const widgetApi = {
-  categories: () => fetch(`${base}/categories`).then((r) => json<CategoryDto[]>(r)),
+  categories: () =>
+    fetch(`${base}/public/categories`).then((r) => json<WidgetCategoryDto[]>(r)),
 
-  submit: (values: ticketFormValues) =>
-    fetch(`${base}/tickets`, {
+  submit: (values: publicTicketFormValues & { contact_fax?: string }) =>
+    fetch(`${base}/public/tickets`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
-    }).then((r) => json<TicketDto>(r)),
+    }).then((r) => json<{ number: number }>(r)),
 };
 
 export interface AdminTicketFilter {

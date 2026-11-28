@@ -12,6 +12,11 @@ export const defaultWidgetLabels = {
   widgetSuccessBody:
     "Your request {number} has been received. Our team will contact you soon.",
   widgetSubmitAnother: "Submit another",
+    widgetNameLabel: "Your name",
+  widgetNamePlaceholder: "First and last name",
+  widgetEmailLabel: "Email",
+  widgetEmailPlaceholder: "you@example.com",
+  widgetPhoneLabel: "Phone (optional)",
   widgetCategoryLabel: "Category",
   widgetSubjectLabel: "Subject",
   widgetSubjectPlaceholder: "Short summary of the issue",
@@ -22,6 +27,10 @@ export const defaultWidgetLabels = {
   widgetRetry: "Retry",
   widgetErrCategoriesLoad: "Couldn't load categories.",
   widgetErrGeneric: "Something went wrong. Please try again.",
+    widgetErrRateLimited: "Too many requests. Please try again a little later.",
+  widgetErrNameRequired: "Please enter your name",
+  widgetErrEmailInvalid: "Please enter a valid email",
+  widgetErrPhoneTooLong: "Phone number is too long",
   widgetErrCategoryRequired: "Please choose a category.",
   widgetErrCategoryUnavailable:
     "That category is no longer available. Please choose another one.",

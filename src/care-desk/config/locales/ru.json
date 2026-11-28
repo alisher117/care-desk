@@ -27,7 +27,15 @@
     "widgetErrSubjectRequired": "Укажите тему",
     "widgetErrSubjectTooLong": "Тема слишком длинная",
     "widgetErrDescriptionRequired": "Укажите описание",
-    "widgetErrDescriptionTooLong": "Описание слишком длинное"
+        "widgetNameLabel": "Ваше имя",
+    "widgetNamePlaceholder": "Имя и фамилия",
+    "widgetEmailLabel": "Email",
+    "widgetEmailPlaceholder": "you@example.com",
+    "widgetPhoneLabel": "Телефон (необязательно)",
+    "widgetErrRateLimited": "Слишком много обращений. Попробуйте немного позже.",
+    "widgetErrNameRequired": "Укажите имя",
+    "widgetErrEmailInvalid": "Укажите корректный email",
+    "widgetErrPhoneTooLong": "Слишком длинный номер телефона"
   },
   "dashboard": {
     "navTickets": "Обращения",

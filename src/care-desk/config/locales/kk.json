@@ -27,7 +27,16 @@
     "widgetErrSubjectRequired": "Тақырыпты енгізіңіз",
     "widgetErrSubjectTooLong": "Тақырып тым ұзын",
     "widgetErrDescriptionRequired": "Сипаттаманы енгізіңіз",
-    "widgetErrDescriptionTooLong": "Сипаттама тым ұзын"
+    "widgetErrDescriptionTooLong": "Сипаттама тым ұзын",
+    "widgetNameLabel": "Аты-жөні",
+    "widgetNamePlaceholder": "Атыңыз",
+    "widgetEmailLabel": "Эл. пошта",
+    "widgetEmailPlaceholder": "you@example.com",
+    "widgetPhoneLabel": "Телефон (міндетті емес)",
+    "widgetErrNameRequired": "Атыңызды енгізіңіз",
+    "widgetErrEmailInvalid": "Дұрыс эл. пошта мекенжайын енгізіңіз",
+    "widgetErrPhoneTooLong": "Телефон нөмірі тым ұзын",
+    "widgetErrRateLimited": "Сұраулар тым көп. Кейінірек қайталап көріңіз."
   },
   "dashboard": {
     "navTickets": "Өтініштер",
